@@ -582,10 +582,19 @@ function handleSendMessage() {
   }
 }
 
+// Variabel untuk controller abort fetch request
+let currentController = null;
+
 // Stop AI response
 function stopAIResponse() {
   // Hide typing indicator
   hideTypingIndicator();
+
+  // Batalkan request API yang sedang berjalan
+  if (currentController) {
+    currentController.abort();
+    currentController = null;
+  }
 
   // Tambahkan pesan bahwa respons dihentikan
   addBotMessage("Respons dihentikan oleh pengguna.");
@@ -778,9 +787,6 @@ function playSound(soundId) {
   }
 }
 
-// Variabel untuk controller abort fetch request
-let currentController = null;
-
 // Get AI response from OpenRouter API
 async function getAIResponse(userMessage) {
   // Hentikan request sebelumnya jika ada
@@ -823,7 +829,19 @@ async function getAIResponse(userMessage) {
       signal: signal
     });
 
+    // Periksa apakah controller masih sama (jika null berarti request telah dibatalkan)
+    if (!currentController) {
+      console.log('Request was cancelled, ignoring response');
+      return;
+    }
+
     const data = await response.json();
+
+    // Periksa lagi apakah controller masih sama setelah parsing JSON
+    if (!currentController) {
+      console.log('Request was cancelled after parsing, ignoring response');
+      return;
+    }
 
     // Hide typing indicator
     hideTypingIndicator();
