@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#5d6af8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Ghost AI Chat</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Nunito:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <!-- Syntax highlighting (untuk menampilkan kode dalam chat) -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css"
+    id="hljs-theme-dark"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-light.min.css"
+    id="hljs-theme-light"
+    disabled
+  />
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="logo.png" />
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Additional style to center cursor vertically in textarea */
+    .textarea-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+      flex: 1;
+    }
+
+    textarea#userInput {
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+      max-height: 120px;
+      width: 100%;
+      border-radius: 30px;
+      border: none;
+      background-color: white;
+      color: var(--light-text);
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+      resize: none;
+      overflow-y: auto;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      line-height: 24px; /* This helps center text vertically */
+    }
+
+    body.dark-mode textarea#userInput {
+      background-color: var(--dark-bg);
+      color: var(--dark-text);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Button styles for immediate display */
+    #sendButton {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      height: 44px;
+      padding: 0 25px;
+      border: none;
+      border-radius: 30px;
+      background-color: var(--primary-color);
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      font-weight: 600;
+      font-size: 16px;
+      margin-left: 10px;
+    }
+
+    #sendButton.stop-button {
+      background-color: #f44336;
+      animation: pulse-stop 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse-stop {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Parallax Background Container -->
+  <div class="parallax-container">
+    <div class="parallax-layer layer-1" data-speed="0.1"></div>
+    <div class="parallax-layer layer-2" data-speed="0.2"></div>
+    <div class="parallax-layer layer-3" data-speed="0.3"></div>
+  </div>
+
+  <div class="container">
+    <div class="header" id="stickyHeader">
+      <h1 class="site-title">
+        <!-- Logo Image with Animation -->
+        <img src="logo.png" alt="Logo" class="logo-image" />
+        <div class="title-container">
+          <span class="title-text">Ghost<span class="title-accent">AI</span></span>
+          <span class="tagline">Talk with AI You Trust</span>
+        </div>
+      </h1>
+      <div class="toggle-container">
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">
+          <i class="fas fa-moon"></i><span>Dark Mode</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="chat-container">
+        <div class="chat-header">
+          <span class="ghost-icon">👻</span>Chat with GhostTalk
+          <button id="clear-chat-btn" class="icon-btn" title="Clear Chat" aria-label="Clear chat history">
+            <i class="fas fa-trash-can"></i>
+          </button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+          <!-- Welcome message will be dynamically added by JavaScript -->
+        </div>
+        <!-- Typing indicator -->
+        <div id="typing-indicator" class="typing-indicator hidden">
+          <div class="typing-dots">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+          <span class="typing-model">AI is thinking...</span>
+        </div>
+        <div class="chat-input">
+          <div class="textarea-container">
+            <textarea
+              id="userInput"
+              placeholder=""
+              aria-label="Type your message"
+              rows="1"
+              class="typewriter-placeholder"
+            ></textarea>
+            <div id="animated-placeholder" class="animated-placeholder"></div>
+          </div>
+          <button type="button" id="sendButton" aria-label="Send message">
+            <span class="button-text">Send</span>
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="settings">
+        <h3><i class="fas fa-cog"></i>Settings</h3>
+        <div class="settings-wrapper">
+          <!-- AI Model Selector -->
+          <div class="settings-group" id="modelSelectorGroup">
+            <label for="modelSelector">AI Model:</label>
+            <div class="select-wrapper">
+              <select id="modelSelector" aria-label="Select AI model">
+                <!-- Mini Models -->
+                <optgroup label="Mini Models">
+                  <option value="qwen/qwen3-0.6b-04-28:free">Qwen 0.6B (Mini)</option>
+                  <option value="qwen/qwen3-1.7b:free">Qwen 1.7B (Mini)</option>
+                  <option value="google/gemma-3-1b-it:free">Gemma-3-1B-IT (Mini)</option>
+                  <option value="meta-llama/llama-3.2-1b-instruct:free">Llama-3.2-1B (Mini)</option>
+                  <option value="google/gemma-2-9b-it:free">Gemma-2-9B-IT (Mini)</option>
+                  <option value="huggingfaceh4/zephyr-7b-beta:free">Zephyr-7B-Beta (Mini)</option>
+                  <option value="mistralai/mistral-7b-instruct:free">Mistral-7B-Instruct (Mini)</option>
+                </optgroup>
+
+                <!-- Small Models -->
+                <optgroup label="Small Models">
+                  <option value="qwen/qwen3-4b:free">Qwen 4B (Small)</option>
+                  <option value="google/gemma-3-4b-it:free">Gemma-3-4B-IT (Small)</option>
+                  <option value="meta-llama/llama-3.2-3b-instruct:free">Llama-3.2-3B (Small)</option>
+                  <option value="meta-llama/llama-3.1-8b-instruct:free" selected>Llama-3.1-8B-Instruct (Small)</option>
+                  <option value="qwen/qwen-2.5-7b-instruct:free">Qwen-2.5-7B-Instruct (Small)</option>
+                  <option value="allenai/molmo-7b-d:free">Molmo-7B-D (Small)</option>
+                </optgroup>
+
+                <!-- Medium Models -->
+                <optgroup label="Medium Models">
+                  <option value="qwen/qwen3-8b:free">Qwen 8B (Medium)</option>
+                  <option value="qwen/qwen3-14b:free">Qwen 14B (Medium)</option>
+                  <option value="google/gemma-3-12b-it:free">Gemma-3-12B-IT (Medium)</option>
+                  <option value="thudm/glm-z1-9b:free">GLM-Z1-9B (Medium)</option>
+                  <option value="thudm/glm-4-9b:free">GLM-4-9B (Medium)</option>
+                  <option value="meta-llama/llama-4-scout:free">Llama-4-Scout (Medium)</option>
+                  <option value="deepseek/deepseek-v3-base:free">DeepSeek-V3-Base (Medium)</option>
+                  <option value="rekaai/reka-flash-3:free">Reka Flash 3 (Medium)</option>
+                  <option value="nousresearch/deephermes-3-llama-3-8b-preview:free">DeepHermes-3-Llama-3-8B (Medium)</option>
+                  <option value="moonshotai/moonlight-16b-a3b-instruct:free">Moonlight-16B-A3B (Medium)</option>
+                  <option value="google/gemini-2.0-flash-exp:free">Gemini-2.0-Flash-Exp (Medium)</option>
+                  <option value="deepseek/deepseek-chat-v3-0324:free">DeepSeek-Chat-V3-0324 (Medium)</option>
+                  <option value="deepseek/deepseek-r1-distill-qwen-14b:free">DeepSeek-R1-Distill-Qwen-14B (Medium)</option>
+                  <option value="google/learnlm-1.5-pro-experimental:free">LearnLM-1.5-Pro-Experimental (Medium)</option>
+                </optgroup>
+
+                <!-- Large Models -->
+                <optgroup label="Large Models">
+                  <option value="qwen/qwen3-32b:free">Qwen 32B (Large)</option>
+                  <option value="qwen/qwen3-30b-a3b:free">Qwen 30B A3B (Large)</option>
+                  <option value="thudm/glm-z1-32b:free">GLM-Z1-32B (Large)</option>
+                  <option value="thudm/glm-4-32b:free">GLM-4-32B (Large)</option>
+                  <option value="meta-llama/llama-4-maverick:free">Llama-4-Maverick (Large)</option>
+                  <option value="google/gemma-3-27b-it:free">Gemma-3-27B-IT (Large)</option>
+                  <option value="qwen/qwq-32b:free">QWQ-32B (Large)</option>
+                  <option value="qwen/qwq-32b-preview:free">QWQ-32B-Preview (Large)</option>
+                  <option value="mistralai/mistral-small-3.1-24b-instruct:free">Mistral Small 3.1 24B (Large)</option>
+                  <option value="mistralai/mistral-small-24b-instruct-2501:free">Mistral Small 24B Instruct 2501 (Large)</option>
+                  <option value="arliai/qwq-32b-arliai-rpr-v1:free">QWQ-32B-ArlAI-RPR-V1 (Large)</option>
+                  <option value="cognitivecomputations/dolphin3.0-r1-mistral-24b:free">Dolphin3.0-R1-Mistral-24B (Large)</option>
+                  <option value="cognitivecomputations/dolphin3.0-mistral-24b:free">Dolphin3.0-Mistral-24B (Large)</option>
+                  <option value="deepseek/deepseek-r1-zero:free">DeepSeek-R1-Zero (Large)</option>
+                  <option value="deepseek/deepseek-r1:free">DeepSeek-R1 (Large)</option>
+                  <option value="deepseek/deepseek-chat:free">DeepSeek-Chat (Large)</option>
+                  <option value="mistralai/mistral-nemo:free">Mistral-Nemo (Large)</option>
+                </optgroup>
+
+                <!-- XLarge Models -->
+                <optgroup label="XLarge Models">
+                  <option value="qwen/qwen3-235b-a22b:free">Qwen 235B A22B (XLarge)</option>
+                  <option value="shisa-ai/shisa-v2-llama3.3-70b:free">Shisa-V2-Llama-3.3-70B (XLarge)</option>
+                  <option value="nvidia/llama-3.3-nemotron-super-49b-v1:free">Llama-3.3-Nemotron-49B (XLarge)</option>
+                  <option value="nvidia/llama-3.1-nemotron-ultra-253b-v1:free">Llama-3.1-Nemotron-253B (XLarge)</option>
+                  <option value="meta-llama/llama-3.3-70b-instruct:free">Llama-3.3-70B-Instruct (XLarge)</option>
+                  <option value="qwen/qwen-2.5-72b-instruct:free">Qwen-2.5-72B-Instruct (XLarge)</option>
+                  <option value="featherless/qwerky-72b:free">Qwerky-72B (XLarge)</option>
+                  <option value="bytedance-research/ui-tars-72b:free">UI-TARS-72B (XLarge)</option>
+                  <option value="deepseek/deepseek-r1-distill-llama-70b:free">DeepSeek-R1-Distill-Llama-70B (XLarge)</option>
+                  <option value="meta-llama/llama-3.1-405b:free">Llama-3.1-405B (XLarge)</option>
+                </optgroup>
+
+                <!-- Vision Models -->
+                <optgroup label="Vision Models">
+                  <option value="opengvlab/internvl3-14b:free">InternVL3-14B (Vision)</option>
+                  <option value="moonshotai/kimi-vl-a3b-thinking:free">KIMI-VL-A3B-Thinking (Vision)</option>
+                  <option value="qwen/qwen2.5-vl-3b-instruct:free">Qwen2.5-VL-3B-Instruct (Vision)</option>
+                  <option value="qwen/qwen2.5-vl-32b-instruct:free">Qwen2.5-VL-32B-Instruct (Vision)</option>
+                  <option value="qwen/qwen2.5-vl-72b-instruct:free">Qwen2.5-VL-72B-Instruct (Vision)</option>
+                  <option value="qwen/qwen-2.5-vl-7b-instruct:free">Qwen-2.5-VL-7B-Instruct (Vision)</option>
+                  <option value="meta-llama/llama-3.2-11b-vision-instruct:free">Llama-3.2-11B-Vision (Vision)</option>
+                </optgroup>
+
+                <!-- Specialized Models -->
+                <optgroup label="Specialized Models">
+                  <option value="deepseek/deepseek-prover-v2:free">DeepSeek Prover V2 (Math)</option>
+                  <option value="microsoft/mai-ds-r1:free">Microsoft MAI-DS-R1 (Data Science)</option>
+                  <option value="agentica-org/deepcoder-14b-preview:free">DeepCoder-14B (Code)</option>
+                  <option value="qwen/qwen-2.5-coder-32b-instruct:free">Qwen-2.5-Coder-32B (Code)</option>
+                  <option value="open-r1/olympiccoder-32b:free">OlympicCoder-32B (Code)</option>
+                  <option value="tngtech/deepseek-r1t-chimera:free">DeepSeek-R1T-Chimera (Specialized)</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-group" id="languageGroup">
+            <label for="language">Language:</label>
+            <div class="select-wrapper">
+              <select id="language" aria-label="Select language">
+                <option value="en">English</option>
+                <option value="id">Indonesia</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-group" id="soundEffectsGroup">
+            <label for="soundEffects">Sound Effects:</label>
+            <div class="select-wrapper">
+              <select id="soundEffects" aria-label="Enable or disable sound effects">
+                <option value="off">Off</option>
+                <option value="on">On</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="model-info" id="modelInfoContainer">
+            <h4>About Current Model</h4>
+            <p id="model-description">
+              Small language model with good balance between speed and capability. Perfect for everyday use with fast
+              responses and good context understanding.
+            </p>
+            <div class="model-strengths">
+              <span class="strength-tag">Fast responses</span>
+              <span class="strength-tag">Good context</span>
+              <span class="strength-tag">General purpose</span>
+            </div>
+          </div>
+        </div>
+        <div id="errorContainer" role="alert" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Ghost AI <i class="fas fa-heart"></i> 2025 | Running on ghost power 👻</p>
+    </div>
+  </div>
+
+  <!-- Audio elements for sound effects -->
+  <audio id="messageSentSound" preload="auto">
+    <source src="assets/audio/notification.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="messageReceivedSound" preload="auto">
+    <source src="assets/audio/notification.mp3" type="audio/mpeg" />
+  </audio>
+
+  <!-- Scripts for markdown and code highlighting -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/javascript.min.js"></script>
+
+  <!-- Main script -->
+  <script src="script.js"></script>
+</body>
+</html>
